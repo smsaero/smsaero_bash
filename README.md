@@ -40,6 +40,9 @@ smsaero_enable_test_mode
 
 # send sms
 smsaero_send_sms 70000000000 'Hello, World!' | jq .data
+
+# send telegram code
+smsaero_send_telegram 70000000000 1234 'SMS Aero' 'Your code 1234' | jq .data
 ```
 
 ## Requirements:

@@ -17,6 +17,8 @@
 # - `smsaero_init`: Initializes the library with your SmsAero credentials.
 # - `smsaero_send_sms`: Sends an SMS message.
 # - `smsaero_sms_status`: Checks the status of a sent SMS message.
+# - `smsaero_send_telegram`: Sends a Telegram code to the specified phone number.
+# - `smsaero_telegram_status`: Checks the status of a sent Telegram code.
 # - `smsaero_contact_add`, `smsaero_contact_delete`: Manage your contacts.
 # - `smsaero_group_add`, `smsaero_group_delete`: Manage your groups.
 # - `smsaero_blacklist_add`, `smsaero_blacklist_delete`: Manage your blacklist.
@@ -441,6 +443,55 @@ smsaero_blacklist_delete() {
     local blacklist_id="$1"
     local data="{\"id\": $blacklist_id}"
     smsaero_send_request "blacklist/delete" "$data"
+}
+
+# smsaero_send_telegram: Sends a Telegram code to the specified phone number.
+# Arguments:
+#   $1 - phone (required): The phone number to send the Telegram code to.
+#   $2 - code (required): The Telegram code (4 to 8 digits).
+#   $3 - sign (optional): The SMS sender name.
+#   $4 - text (optional): The SMS message text.
+# Returns:
+#   0 on success, non-zero on error. Outputs the result of the Telegram code sending.
+smsaero_send_telegram() {
+    smsaero_validate_required_numeric_field "$1" "phone"
+    [[ $? -ne 0 ]] && return 1
+
+    smsaero_validate_required_numeric_field "$2" "code"
+    [[ $? -ne 0 ]] && return 1
+
+    local phone="$1"
+    local code="$2"
+    local sign="$3"
+    local text="$4"
+
+    local data="{\"number\": \"$phone\", \"code\": $code"
+    [[ -n "$sign" ]] && data="$data, \"sign\": \"$sign\""
+    [[ -n "$text" ]] && data="$data, \"text\": \"$text\""
+    data="$data}"
+
+    local endpoint="telegram/send"
+    [[ "$SMSAERO_TEST_MODE" -eq 1 ]] && endpoint="telegram/testsend"
+
+    smsaero_send_request "$endpoint" "$data"
+}
+
+# smsaero_telegram_status: Checks the status of a sent Telegram code.
+# Arguments:
+#   $1 - telegram_id (required): The ID of the Telegram message whose status is to be checked.
+# Returns:
+#   0 on success, non-zero on error. Outputs the status of the Telegram message.
+smsaero_telegram_status() {
+    smsaero_validate_required_numeric_field "$1" "telegram_id"
+    if [[ $? -ne 0 ]]; then return 1; fi
+
+    local telegram_id="$1"
+    local data="{\"id\": $telegram_id}"
+
+    local endpoint="telegram/status"
+    [[ "$SMSAERO_TEST_MODE" -eq 1 ]] && endpoint="telegram/teststatus"
+
+    smsaero_send_request "$endpoint" "$data"
 }
 
 ########################################################################################################################
